@@ -5,11 +5,16 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  type ShouldRevalidateFunctionArgs,
 } from "react-router";
 
 import type { Route } from "./+types/root";
 import "./app.css";
 
+/**
+ * 定义页面需要预加载的资源链接
+ * @returns {Array} 返回一个包含资源链接配置的数组
+ */
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {
@@ -23,6 +28,30 @@ export const links: Route.LinksFunction = () => [
   },
 ];
 
+/**
+ * 定义页面的SEO元信息
+ * @returns {Array} 返回一个包含SEO元信息的数组
+ */
+export function meta() {
+  return [
+    { title: "Very cool app" },
+    {
+      property: "og:title",
+      content: "Very cool app",
+    },
+    {
+      name: "description",
+      content: "This app is the best",
+    },
+  ];
+}
+
+/**
+ * 基础页面布局组件
+ * @param {Object} props - 组件属性
+ * @param {React.ReactNode} props.children - 子组件
+ * @returns {JSX.Element} 返回页面布局结构
+ */
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
@@ -41,10 +70,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
+/**
+ * 应用主组件
+ * @returns {JSX.Element} 返回路由出口组件
+ */
 export default function App() {
   return <Outlet />;
 }
 
+/**
+ * 错误边界处理组件
+ * @param {Object} props - 组件属性
+ * @param {Error|RouteErrorResponse} props.error - 捕获的错误对象
+ * @returns {JSX.Element} 返回错误展示UI
+ */
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   let message = "Oops!";
   let details = "An unexpected error occurred.";
@@ -72,4 +111,13 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
       )}
     </main>
   );
+}
+
+/**
+ * 决定路由是否需要重新验证
+ * @param {ShouldRevalidateFunctionArgs} arg - 路由验证参数
+ * @returns {boolean} 返回是否需要重新验证
+ */
+export function shouldRevalidate(arg: ShouldRevalidateFunctionArgs) {
+  return true;
 }

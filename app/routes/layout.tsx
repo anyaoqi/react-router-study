@@ -1,9 +1,11 @@
-import { Outlet } from "react-router";
+import { Outlet, Link } from "react-router";
 
 export default function Layout() {
   return (
     <div>
-      <h1>这是根Layout布局</h1>
+      <nav>
+        <Link to="/">Home</Link> |<Link to="/about">About</Link>
+      </nav>
       <Outlet />
     </div>
   );
