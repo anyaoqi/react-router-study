@@ -44,7 +44,6 @@ export default function Product({ loaderData }: Route.ComponentProps) {
       <Link to="/product/3">Product 3</Link>
       <h1>ID：{product.id}</h1>
       <h2>标题：{product.title}</h2>
-      <h2>标题：{product.myname}</h2>
       <p>内容：{product.body}</p>
     </div>
   );
