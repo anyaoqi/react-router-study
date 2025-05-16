@@ -1,4 +1,4 @@
-# React Router 学习笔记
+# React Router **Framework 模式**
 
 ## 一、路由
 
@@ -418,3 +418,195 @@ export default {
 > - 点击 Link 链接跳转：客户端加载
 > - 点击 a 链接跳转：服务端加载 && 客户端加载
 > - 如果服务端和客户端同时执行时都有返回数据，会使用客户端的数据。
+
+## 五、提交请求
+
+### 1.客户端提交表单-clientAction
+
+- 客户端提交表单是在浏览器端处理表单提交的过程，数据处理逻辑在客户端执行。
+- 适用于不需要服务器端验证或处理的场景，可以提供更快的用户响应体验。
+
+```jsx
+export async function clientAction({ request }: Route.ClientActionArgs) {
+  let formData = await request.formData();
+  let pid = formData.get("pid");
+  console.log("客户端提交：", pid);
+  const res = await fetch(`https://jsonplaceholder.typicode.com/posts/${pid}`);
+  const project = await res.json();
+  return project;
+}
+```
+
+### 2.服务端提交表单-action
+
+- 服务端提交表单是将表单数据发送到服务器进行处理的方式。
+- 在 React Router 中，通过 action 函数处理表单提交，这个函数在服务器端执行。
+- 适用于需要服务器端验证、数据处理或安全性要求高的场景。
+
+```jsx
+export async function action({ request }: Route.ClientActionArgs) {
+  let formData = await request.formData();
+  let pid = formData.get("pid");
+  console.log("服务端提交：", pid);
+
+  const res = await fetch(`https://jsonplaceholder.typicode.com/posts/${pid}`);
+  const project = await res.json();
+  return project;
+}
+```
+
+### 3.调用提交
+
+#### 3.1 表单调用-Form
+
+- 最简单的表单提交方式，使用当前路由的 action 处理提交
+
+```jsx
+<Form method="post" action="/projectDetail/2">
+  <input className="border p-1 mr-1" type="number" name="pid" />
+  <button type="submit">Submit</button>
+</Form>
+```
+
+#### 3.2 钩子调用-useSubmit
+
+- useSubmit 钩子提供了以编程方式提交表单的能力，返回一个 submit 函数。
+- 当调用 submit 函数时，会触发表单提交并调用相应的 action 函数。
+- 优点：可以在提交前进行数据处理或验证，更灵活地控制提交过程。
+
+```jsx
+import { Form, useSubmit } from "react-router";
+
+export default function Product({ actionData }: Route.ComponentProps) {
+  const submit = useSubmit();
+
+  async function handleSubmit() {
+    let pidInput = document.getElementById("pid") as HTMLInputElement;
+    let pid = pidInput.value;
+    const res = await fetch(
+      `https://jsonplaceholder.typicode.com/posts/${pid}`
+    );
+    const project = await res.json();
+    submit({ project }, { action: "/projectDetail/2", method: "post" });
+  }
+
+  return (
+    <div>
+      <Form onSubmit={handleSubmit}>
+        <input className="border p-1 mr-1" type="number" id="pid" name="pid" />
+        <button type="submit">Submit</button>
+      </Form>
+    </div>
+  );
+}
+```
+
+#### 3.3 useFetcher 钩子-fetcher.Form
+
+- useFetcher 用于在不导航的情况下与路由 action 和 loader 交互。
+- 适用于后台提交数据或加载数据的场景，不会触发页面导航。
+- 提供了 state 属性用于跟踪交互状态（idle, loading, submitting）。
+
+```jsx
+import { Form, useFetcher } from "react-router";
+
+export default function Product({ actionData }: Route.ComponentProps) {
+  const fetcher = useFetcher();
+  let busy = fetcher.state !== "idle";
+
+  return (
+    <div>
+      <fetcher.Form method="post" action="/projectDetail/2">
+        <input className="border p-1 mr-1" type="text" name="title" />
+        <button type="submit">{busy ? "Saving..." : "Save"}</button>
+      </fetcher.Form>
+    </div>
+  );
+}
+```
+
+## 六、导航-Navigation
+
+### 1. 导航链接-NavLink
+
+可以根据导航状态添加不同样式，适合需要动态修改样式的链接
+
+```jsx
+import { NavLink } from "react-router";
+
+export function MyAppNav() {
+  return (
+    <nav>
+      <NavLink to="/" end>
+        Home
+      </NavLink>
+      <NavLink
+        to="/messages"
+        className={({ isActive, isPending, isTransitioning }) =>
+          [
+            isPending ? "pending" : "",
+            isActive ? "active" : "",
+            isTransitioning ? "transitioning" : "",
+          ].join(" ")
+        }
+      >
+        Messages
+      </NavLink>
+    </nav>
+  );
+}
+```
+
+### 2.普通链接-Link
+
+普通链接和导航链接的区别是没有状态，适合不需要动态修改样式的链接
+
+```jsx
+import { Link } from "react-router";
+
+export function LoggedOutMessage() {
+  return (
+    <p>
+      You've been logged out. <Link to="/login">Login again</Link>
+    </p>
+  );
+}
+```
+
+### 3.表单链接-Form
+
+```jsx
+<Form action="/search">
+  <input type="text" name="q" />
+</Form>
+```
+
+提交时表单会跳转到链接 `/search?q=journey`
+
+### 4.重定向链接-redirect
+
+```jsx
+import { redirect } from "react-router";
+
+export async function loader({ request }) {
+  let user = await getUser(request);
+  if (!user) {
+    return redirect("/login");
+  }
+  return { userName: user.name };
+}
+```
+
+### 5.手动跳转-useNavigate
+
+```jsx
+import { useNavigate } from "react-router";
+
+export function useLogoutAfterInactivity() {
+  let navigate = useNavigate();
+
+  useFakeInactivityHook(() => {
+    navigate("/logout");
+  });
+}
+```
